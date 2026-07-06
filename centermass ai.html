@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Centermass AI — London Session Structure</title>
+<meta name="description" content="Institutional-grade London session dashboard and AI chart structure reader." />
+<style>
+  :root{
+    --bg:#0b1220; --card:#131c30; --card2:#182241; --border:rgba(255,255,255,.08);
+    --fg:#eaf0ff; --muted:#8a97b8; --primary:#22d3ee; --primary-fg:#08131e;
+    --emerald:#10b981; --amber:#f59e0b; --rose:#f43f5e; --violet:#8b5cf6;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:radial-gradient(1200px 800px at 80% -10%,rgba(34,211,238,.08),transparent 60%),var(--bg);
+    color:var(--fg);
+    min-height:100vh;
+    line-height:1.5;
+  }
+  a{color:var(--primary);text-decoration:none}
+  .wrap{max-width:520px;margin:0 auto;padding:20px 16px 60px}
+  header.hero{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--violet));
+    display:grid;place-items:center;color:var(--primary-fg);font-weight:800}
+  .brand h1{font-size:16px;margin:0;letter-spacing:.2px}
+  .brand p{margin:0;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+  .eat{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;text-align:right}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .card.primary{border-color:rgba(34,211,238,.28)}
+  .row{display:flex;align-items:center;justify-content:space-between}
+  .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;display:flex;align-items:center;gap:6px}
+  .big{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px}
+  .small{font-size:12px;color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+  .val{font-size:18px;font-weight:700;color:var(--primary);margin-top:6px}
+  .dashed{border-style:dashed}
+
+  .dot{position:relative;display:inline-block;width:10px;height:10px;border-radius:99px}
+  .dot .ping{position:absolute;inset:0;border-radius:99px;opacity:.6;animation:ping 1.6s cubic-bezier(0,0,.2,1) infinite}
+  @keyframes ping{75%,100%{transform:scale(2);opacity:0}}
+  .liq{display:inline-flex;gap:4px}
+  .liq span{width:16px;height:6px;border-radius:99px;background:#2a355a}
+  .bg-high{background:var(--emerald)!important} .bg-med{background:var(--amber)!important} .bg-low{background:var(--rose)!important}
+  .txt-high{color:var(--emerald)} .txt-med{color:var(--amber)} .txt-low{color:var(--rose)}
+
+  .warn{border:1px solid rgba(245,158,11,.45);background:rgba(245,158,11,.10);border-radius:var(--radius);padding:12px;display:flex;gap:10px;margin-bottom:12px}
+  .warn strong{color:var(--amber);display:block;font-size:13px}
+  .warn p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+
+  .btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600;color:var(--primary-fg);
+    background:var(--primary);border-radius:10px;padding:10px 14px;width:100%;transition:filter .15s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--border)}
+
+  input[type=text],input[type=tel],input[type=password]{
+    width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--fg);
+    padding:10px 12px;border-radius:8px;font:inherit;outline:none
+  }
+  input:focus{border-color:var(--primary)}
+
+  .drop{border:2px dashed rgba(255,255,255,.15);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+  .drop:hover,.drop.hot{background:rgba(34,211,238,.06);border-color:var(--primary)}
+  .drop .ic{width:36px;height:36px;border-radius:99px;background:rgba(34,211,238,.15);display:grid;place-items:center;margin:0 auto 8px}
+  .drop input{display:none}
+  .preview{position:relative;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px;margin-bottom:10px}
+  .preview img{width:100%;max-height:260px;object-fit:contain;border-radius:6px;display:block}
+  .rm{position:absolute;top:-8px;right:-8px;background:var(--rose);color:#fff;border:0;width:22px;height:22px;border-radius:99px;cursor:pointer;font-weight:700}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f1a30;border:1px solid var(--border);
+    padding:10px 14px;border-radius:10px;font-size:13px;box-shadow:0 12px 40px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;transform:translate(-50%,-4px)}
+  .toast.ok{border-color:rgba(16,185,129,.5)} .toast.err{border-color:rgba(244,63,94,.5)}
+
+  .scanner{position:relative;height:6px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+  .scanner::after{content:"";position:absolute;top:0;left:-30%;width:30%;height:100%;
+    background:linear-gradient(90deg,transparent,var(--primary),transparent);animation:sweep 1.6s linear infinite}
+  @keyframes sweep{to{left:110%}}
+
+  .kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);font-size:13px}
+  .kv:last-child{border-bottom:0}
+  .kv b{color:var(--fg)} .kv span{color:var(--muted)}
+  h2.sec{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:22px 4px 8px}
+  footer{margin-top:32px;text-align:center;font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="brand">
+      <div class="logo">C</div>
+      <div>
+        <h1>Centermass AI</h1>
+        <p>London Session · Structure Reader</p>
+      </div>
+    </div>
+    <div class="eat" id="eat">--:-- EAT</div>
+  </header>
+
+  <!-- Session dashboard -->
+  <div class="card primary">
+    <div class="row">
+      <div class="label"><span class="dot" id="sessDot"><span class="ping" id="sessPing"></span></span> Active Session</div>
+      <div class="liq" id="liq"><span></span><span></span><span></span></div>
+    </div>
+    <div class="row" style="align-items:baseline">
+      <div class="big" id="sessName">—</div>
+      <div class="small" id="liqLabel">—</div>
+    </div>
+    <div class="small" id="volLabel">—</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="label">⏱ London Open <span id="lnOpen"></span></div>
+      <div class="val mono" id="countdown">--:--:--</div>
+    </div>
+    <div class="card">
+      <div class="label">📈 Volatility</div>
+      <div class="val" style="font-size:15px" id="volShort">—</div>
+    </div>
+  </div>
+
+  <div class="card dashed">
+    <div class="label">✨ Best window today</div>
+    <div class="small" style="color:var(--fg);margin-top:4px">London open 10:00–13:00 EAT · Overlap 15:00–19:00 EAT</div>
+  </div>
+
+  <div id="deadWarn" class="warn" hidden>
+    <div>⚠️</div>
+    <div>
+      <strong>Dead liquidity window</strong>
+      <p id="deadMsg"></p>
+    </div>
+  </div>
+
+  <!-- Payment (demo) -->
+  <h2 class="sec">Unlock analysis</h2>
+  <div class="card" id="payCard">
+    <div class="row" style="gap:8px">
+      <div class="label">📱 M-Pesa · KES 350</div>
+    </div>
+    <p class="small" style="margin:6px 0 10px">Pay via M-Pesa STK Push. Paybill 544600, Account 9135753.</p>
+    <input id="phone" type="tel" placeholder="07XX XXX XXX" />
+    <div style="height:8px"></div>
+    <button class="btn" id="payBtn">Pay KES 350</button>
+    <p class="small" id="payStatus" style="text-align:center;margin-top:8px" hidden></p>
+  </div>
+
+  <!-- Chart uploader -->
+  <h2 class="sec">Chart analyzer</h2>
+  <div class="card" id="uploadCard">
+    <div style="text-align:center;margin-bottom:10px">
+      <div style="font-weight:700;font-size:13px">Upload your chart</div>
+      <div class="small">One screenshot — AI reads structure, liquidity & London-session behavior</div>
+    </div>
+    <label class="drop" id="drop">
+      <div class="ic">⬆</div>
+      <div style="font-weight:600;font-size:12px">Drop chart screenshot here</div>
+      <div class="small">PNG, JPG · up to 10MB</div>
+      <input type="file" accept="image/*" id="file" />
+    </label>
+    <div id="previewWrap" hidden></div>
+    <button class="btn" id="analyzeBtn" style="margin-top:10px" hidden>Analyze London Session Structure</button>
+    <div id="loader" hidden style="margin-top:12px">
+      <div class="scanner"></div>
+      <p class="small" style="text-align:center;margin-top:8px">Reading session structure…</p>
+    </div>
+    <div id="results" hidden style="margin-top:14px">
+      <div class="kv"><span>Session bias</span><b id="rBias">—</b></div>
+      <div class="kv"><span>Structure</span><b id="rStruct">—</b></div>
+      <div class="kv"><span>Liquidity target</span><b id="rLiq">—</b></div>
+      <div class="kv"><span>Suggested entry zone</span><b id="rZone">—</b></div>
+      <div class="kv"><span>Confidence</span><b id="rConf">—</b></div>
+    </div>
+  </div>
+
+  <footer>Single-file demo · UI only · payments & AI stubbed</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Toast ---------- */
+const toastEl = document.getElementById('toast');
+let toastT;
+function toast(msg, kind='ok'){
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show ' + kind;
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>toastEl.className='toast',2200);
+}
+
+/* ---------- Session logic (ported from src/lib/sessions.ts) ---------- */
+const EAT_OFFSET = 3*60*60*1000;
+function getSession(now){
+  const h = now.getUTCHours();
+  const inAsian = h>=23||h<8, inLondon = h>=7&&h<16, inNY = h>=12&&h<21;
+  if(inLondon&&inNY) return 'London-NY Overlap';
+  if(inLondon) return 'London';
+  if(inNY) return 'New York';
+  if(inAsian) return 'Asian';
+  return 'Off-hours';
+}
+function liqFor(s){ return s==='London-NY Overlap'||s==='London' ? 'High' : s==='New York' ? 'Medium' : 'Low'; }
+function volFor(s){
+  return ({
+    'London-NY Overlap':'Peak volatility',
+    'London':'High volatility — institutional flow',
+    'New York':'Active volatility',
+    'Asian':'Range / accumulation',
+    'Off-hours':'Dead market — avoid trading',
+  })[s];
+}
+function nextLondonOpen(now){
+  const d = new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),7,0,0,0));
+  if(now.getTime()>=d.getTime()) d.setUTCDate(d.getUTCDate()+1);
+  return d;
+}
+function fmtCountdown(ms){
+  if(ms<=0) return 'LIVE';
+  const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(h)}:${p(m)}:${p(sec)}`;
+}
+function fmtEAT(utc){
+  const e = new Date(utc.getTime()+EAT_OFFSET);
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(e.getUTCHours())}:${p(e.getUTCMinutes())} EAT`;
+}
+
+/* ---------- Dashboard renderer ---------- */
+const el = id=>document.getElementById(id);
+function tick(){
+  const now = new Date();
+  const s = getSession(now), liq = liqFor(s), live = s==='London'||s==='London-NY Overlap';
+  el('eat').textContent = fmtEAT(now);
+  el('sessName').textContent = s;
+  el('liqLabel').textContent = liq + ' liquidity';
+  el('volLabel').textContent = '● ' + volFor(s);
+  el('volShort').textContent = liq==='High'?'Elevated':liq==='Medium'?'Moderate':'Subdued';
+
+  const cls = liq==='High'?'bg-high':liq==='Medium'?'bg-med':'bg-low';
+  el('sessDot').className = 'dot '+cls;
+  el('sessPing').className = 'ping '+cls;
+  el('sessPing').style.display = live?'block':'none';
+
+  const dots = el('liq').children;
+  const filled = liq==='High'?3:liq==='Medium'?2:1;
+  for(let i=0;i<3;i++){ dots[i].className = i<filled?cls:''; }
+
+  const nlo = nextLondonOpen(now);
+  el('lnOpen').textContent = fmtEAT(nlo);
+  el('countdown').textContent = live?'LIVE':fmtCountdown(nlo-now);
+
+  const dead = s==='Off-hours'||s==='Asian';
+  el('deadWarn').hidden = !dead;
+  el('deadMsg').textContent = s==='Asian'
+    ? 'Asian session is range-bound. Mark the Asian high/low; wait for London to sweep them.'
+    : 'Markets are quiet. Avoid forcing trades — the next high-probability window is London open.';
+}
+tick(); setInterval(tick,1000);
+
+/* ---------- M-Pesa (stubbed) ---------- */
+const payBtn = el('payBtn'), payStatus = el('payStatus');
+let paid = false;
+payBtn.addEventListener('click', ()=>{
+  const phone = el('phone').value.trim();
+  if(!phone){ toast('Enter your M-Pesa phone number','err'); return; }
+  payBtn.disabled = true;
+  payStatus.hidden = false;
+  payStatus.textContent = 'Sending STK push…';
+  toast('Check your phone (demo)','ok');
+  setTimeout(()=>{
+    payStatus.textContent = 'Waiting for PIN…';
+    setTimeout(()=>{
+      paid = true;
+      payStatus.textContent = '✓ Payment confirmed. Analysis unlocked.';
+      payStatus.style.color = 'var(--emerald)';
+      payBtn.textContent = 'Paid ✓';
+      toast('Payment confirmed','ok');
+    },1400);
+  },900);
+});
+
+/* ---------- Chart uploader ---------- */
+const drop = el('drop'), fileInp = el('file'),
+      previewWrap = el('previewWrap'), analyzeBtn = el('analyzeBtn'),
+      loader = el('loader'), results = el('results');
+let currentSrc = null;
+
+function setPreview(src){
+  currentSrc = src;
+  previewWrap.hidden = false;
+  previewWrap.innerHTML =
+    `<div class="preview"><button class="rm" id="rmBtn" aria-label="Remove">×</button><img alt="Chart" src="${src}"/></div>`;
+  analyzeBtn.hidden = false;
+  results.hidden = true;
+  el('rmBtn').addEventListener('click', ()=>{
+    currentSrc=null; previewWrap.hidden=true; previewWrap.innerHTML='';
+    analyzeBtn.hidden=true; results.hidden=true;
+  });
+}
+function readFile(f){
+  if(!f) return;
+  if(!f.type.startsWith('image/')) return toast('Image files only','err');
+  if(f.size > 10*1024*1024) return toast('Max 10MB','err');
+  const r = new FileReader();
+  r.onload = e => setPreview(e.target.result);
+  r.readAsDataURL(f);
+}
+fileInp.addEventListener('change', e => readFile(e.target.files?.[0]));
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hot')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hot')}));
+drop.addEventListener('drop', e => readFile(e.dataTransfer.files?.[0]));
+
+analyzeBtn.addEventListener('click', ()=>{
+  if(!paid){ toast('Complete M-Pesa payment first','err'); return; }
+  if(!currentSrc){ toast('Upload a chart first','err'); return; }
+  analyzeBtn.disabled = true; analyzeBtn.textContent = 'Analyzing…';
+  loader.hidden = false; results.hidden = true;
+  setTimeout(()=>{
+    loader.hidden = true;
+    const session = getSession(new Date());
+    const bull = Math.random()>.5;
+    el('rBias').textContent = bull?'Bullish (BOS above prior high)':'Bearish (BOS below prior low)';
+    el('rStruct').textContent = bull?'HH / HL — expansion leg':'LL / LH — distribution';
+    el('rLiq').textContent = bull?'Buy-side liquidity above Asian high':'Sell-side liquidity below Asian low';
+    el('rZone').textContent = bull?'H1 OB · retrace 38–61%':'H1 supply · retrace 50–70%';
+    el('rConf').textContent = (session==='London'||session==='London-NY Overlap')?'High (session-aligned)':'Medium (off-session)';
+    results.hidden = false;
+    analyzeBtn.disabled = false; analyzeBtn.textContent = 'Re-analyze';
+    toast('Analysis ready','ok');
+  }, 1600);
+});
+</script>
+</body>
+</html>
